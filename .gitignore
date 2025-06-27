@@ -1,8 +1,4 @@
-**/.DS_Store
-public/
-docs/
-node_modules/
-docker-compose.yml
-package-lock.json
-package.json
-/venv
+config.toml
+content
+*.DS_Store
+venv/
