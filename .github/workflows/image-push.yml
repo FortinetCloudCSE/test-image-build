@@ -1,0 +1,53 @@
+name: Build Fortinet Hugo workshop development images.
+
+on:
+  # Runs on pushes targeting the default branch
+  push:
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+     runner_type:
+       description: 'Runner Type'
+       required: false
+       default: 'ubuntu-latest'
+       type: choice
+       options:
+         - ubuntu-latest
+         - self-hosted
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        dockerfile: [Dockerfile.dev, Dockerfile.prod]
+        name: [hugotester, fortinet-hugo]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Clean Docker cache
+        run: docker system prune
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::228122752878:role/GitHubECRPushOIDC
+          aws-region: us-east-1
+      - name: Login to ECR Public
+        run: |
+          aws ecr-public get-login-password --region us-east-1 | \
+            docker login --username AWS \
+            --password-stdin public.ecr.aws
+      - name: Build image
+        run: DOCKER_BUILDKIT=1 docker build -f ${{ matrix.dockerfile }} -t ${{ matrix.name }} . --target=prod
+      - name: Tag image
+        run: docker tag ${{ matrix.name }}:latest public.ecr.aws/k4n6m5h8/${{ matrix.name }}:latest
+      - name: Push to ECR public
+        run: docker push public.ecr.aws/k4n6m5h8/${{ matrix.name }}:latest
