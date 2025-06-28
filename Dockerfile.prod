@@ -1,5 +1,8 @@
 # syntax=docker/dockerfile:1.5-labs
 
+# Base Hugo image (uses Alpine 3.21)
+FROM hugomods/hugo:std
+
 # Add repo
 ADD https://github.com/FortinetCloudCSE/CentralRepo.git#main /home/CentralRepo
 WORKDIR /home/CentralRepo

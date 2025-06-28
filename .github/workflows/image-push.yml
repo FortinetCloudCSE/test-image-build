@@ -27,8 +27,11 @@ jobs:
 
     strategy:
       matrix:
-        dockerfile: [Dockerfile.dev, Dockerfile.prod]
-        name: [hugotester, fortinet-hugo]
+        include:
+          - dockerfile: Dockerfile.dev
+            imageName: hugotester
+          - dockerfile: Dockerfile.prod
+            imageName: fortinet-hugo
 
     steps:
       - name: Checkout
@@ -46,8 +49,8 @@ jobs:
             docker login --username AWS \
             --password-stdin public.ecr.aws
       - name: Build image
-        run: DOCKER_BUILDKIT=1 docker build -f ${{ matrix.dockerfile }} -t ${{ matrix.name }} . --target=prod
+        run: DOCKER_BUILDKIT=1 docker build -f ${{ matrix.dockerfile }} -t ${{ matrix.imageName }} .
       - name: Tag image
-        run: docker tag ${{ matrix.name }}:latest public.ecr.aws/k4n6m5h8/${{ matrix.name }}:latest
+        run: docker tag ${{ matrix.imageName }}:latest public.ecr.aws/k4n6m5h8/${{ matrix.imageName }}:latest
       - name: Push to ECR public
-        run: docker push public.ecr.aws/k4n6m5h8/${{ matrix.name }}:latest
+        run: docker push public.ecr.aws/k4n6m5h8/${{ matrix.imageName }}:latest
