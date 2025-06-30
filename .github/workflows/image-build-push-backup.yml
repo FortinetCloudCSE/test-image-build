@@ -1,9 +1,9 @@
 name: Build Fortinet Hugo workshop development images.
 
-on:
+#on:
   # Runs on pushes targeting the default branch
-  push:
-    branches: ["main"]
+#  push:
+#    branches: ["main"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -28,12 +28,12 @@ jobs:
     strategy:
       matrix:
         include:
-          - imageName: hugotester
+          - dockerfile: Dockerfile.dev
+            imageName: hugotester
             testPort: 1313
-            target: dev
-          - imageName: fortinet-hugo
+          - dockerfile: Dockerfile.prod
+            imageName: fortinet-hugo
             testPort: 1314
-            target: prod
 
     steps:
       - name: Checkout
@@ -57,7 +57,7 @@ jobs:
             docker login --username AWS \
             --password-stdin public.ecr.aws
       - name: Build image
-        run: DOCKER_BUILDKIT=1 docker build -f Dockerfile -t ${{ matrix.imageName }} . --target=${{ matrix.target }}
+        run: DOCKER_BUILDKIT=1 docker build -f ${{ matrix.dockerfile }} -t ${{ matrix.imageName }} .
       - name: Run container for tests 
         run: ./fortihugorunner launch-server --docker-image ${{ matrix.imageName }} --host-port ${{ matrix.testPort }} &
       - name: Wait for server to be ready and test
