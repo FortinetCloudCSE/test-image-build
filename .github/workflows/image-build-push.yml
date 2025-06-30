@@ -36,13 +36,14 @@ jobs:
             testPort: 1314
 
     steps:
-      - name: Install GitHub cli
-        uses: cli/cli@v3
       - name: Checkout
         uses: actions/checkout@v4
       - name: Download fortihugorunner binary for testing
         run: |
           gh release download --repo FortinetCloudCSE/fortihugorunner --pattern 'fortihugorunner-linux-amd64' --output ./fortihugorunner
+          chmod +x ./fortihugorunner
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Clean Docker cache
         run: docker system prune
       - name: Configure AWS credentials using OIDC
@@ -58,7 +59,7 @@ jobs:
       - name: Build image
         run: DOCKER_BUILDKIT=1 docker build -f ${{ matrix.dockerfile }} -t ${{ matrix.imageName }} .
       - name: Run container for tests 
-        run: ./fortihugorunner launch-server --docker-image ${{ matrix.imageName }} --host-port ${{ matrix.testPort }}
+        run: ./fortihugorunner launch-server --docker-image ${{ matrix.imageName }} --host-port ${{ matrix.testPort }} &
       - name: Wait for server to be ready and test
         run: |
           for i in {1..20}; do
